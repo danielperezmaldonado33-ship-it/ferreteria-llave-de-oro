@@ -1,0 +1,606 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Gallo Ferretería - Sistema de Gestión Avanzado</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        
+        .login-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        /*background: linear-gradient(135deg, #ff6600 0%, #ff6600 100%);*/
+        background-image:url("Imagen1.jpg");
+        background-size: cover;
+        background-position: center;
+        display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: rgb(255, 255, 255); padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        .login-box h1 { text-align: center; margin-bottom: 30px; color: #333; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; }
+        .form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #4e4e51; }
+        .login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #ff6600 0%, #ff6600 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        
+        .main-app { display: none; }
+        .main-app.active { display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 250px; background: #000080; color: white; padding: 20px; overflow-y: auto; }
+        .sidebar h2 { margin-bottom: 30px; border-bottom: 2px solid #ff6600; padding-bottom: 10px; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 10px; }
+        .sidebar button { width: 100%; padding: 12px; background: #34495e; color: rgb(255, 255, 255); border: none; border-radius: 5px; cursor: pointer; text-align: left; transition: all 0.3s; }
+        .sidebar button:hover { background: #ff6600; transform: translateX(5px); }
+        .sidebar button.active { background: #ff6600; }
+        
+        .content { flex: 1; overflow-y: auto; padding: 30px; background-image: url(Imagen2.jpg); background-size: cover; background-position: center; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header h1 { color: #333333; }
+        .header-info { display: flex; gap: 30px; align-items: center; }
+        .datetime { color: #666; font-size: 14px; }
+        .logout-btn { padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        
+        .section { display: none; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section.active { display: block; }
+        .section h2 { color: #2c3e50; margin-bottom: 20px; }
+        
+        .btn-add { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; margin-bottom: 20px; }
+        .btn-add:hover { background: #229954; }
+        
+        .search-filter { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-filter input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 5px; }
+        .search-filter button { padding: 10px 20px; background: #ff6600; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #ff6600; color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f9f9f9; }
+        
+        .btn-edit, .btn-delete { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px; }
+        .btn-edit { background: #ff6600; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-bottom: 20px; }
+        
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-save { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-cancel { padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        
+        .required { color: red; font-weight: bold; }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 5px; display: none; }
+        .alert.show { display: block; }
+        .alert.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        .carrito-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .carrito-section { background: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid #e0e0e0; }
+        .carrito-item { background: white; padding: 15px; border-radius: 5px; margin-bottom: 10px; border-left: 4px solid #00ccff; }
+        
+        .resumen-venta { background: white; padding: 20px; border-radius: 10px; border: 2px solid #ff6600; }
+        .resumen-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .resumen-item.total { border: none; font-weight: 700; font-size: 18px; color: #ff6600; margin-top: 10px; }
+        
+        .comprobante { background: #f5f5f5; padding: 20px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; margin-top: 20px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; }
+        
+        .print-btn { padding: 10px 20px; background: #2980b9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        
+        .stock-alert { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        
+        .stat-card { background: linear-gradient(135deg, #ff6600 0%, #ff6600 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-card .value { font-size: 28px; font-weight: 700; }
+        
+        .no-data { text-align: center; padding: 30px; color: #999; }
+        
+        @media print {#ff6600
+            body { background: white; }
+            .login-container, .main-app, .sidebar, .header, .btn-add, .btn-edit, .btn-delete, .modal, .print-btn, .search-filter { display: none !important; }
+            .comprobante { border: none; background: white; }
+        }
+
+        /* Menu */
+         .productos {
+      display: flex;
+      
+      gap: 1rem;
+      max-width: 800px;
+    }
+
+    .tarjeta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #ffffff;
+      border: 1px solid #fd9503;
+      border-radius: 12px;
+      padding: 12px 16px;
+      transition: box-shadow 0.2s;
+      flex:1;
+    }
+
+    .tarjeta:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .tarjeta img {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      padding: 6px;
+      flex-shrink: 0;
+      flex:1;
+    }
+
+    .info {
+      flex: 1;
+    }
+
+    .info h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #1a1a1a;
+    }
+
+    .info .precio {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .info .precio span {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #222;
+    }
+
+    .btn-agregar {
+      display: inline-block;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: transparent;
+      color: #333;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-agregar:hover {
+      background: #f0f0f0;
+      border-color: #aaa;
+    }
+        
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>El Gallo Ferretería</h1>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" value="admin@ferreteria.com">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" value="123456">
+            </div>
+            <button class="login-btn" onclick="login()">Iniciar Sesión</button>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="main-app" id="mainApp">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h2> “Construye sin límites”</h2>
+            <ul>
+                <li><button onclick="showSection('dashboard')" class="nav-btn active"> Dashboard</button></li>
+                <li><button onclick="showSection('clientes')" class="nav-btn"> Clientes</button></li>
+                <li><button onclick="showSection('proveedores')" class="nav-btn"> Proveedores</button></li>
+                <li><button onclick="showSection('personal')" class="nav-btn">Personal</button></li>
+                <li><button onclick="showSection('categorias')" class="nav-btn">Categorías</button></li>
+                <li><button onclick="showSection('productos')" class="nav-btn">Productos</button></li>
+                <li><button onclick="showSection('inventario')" class="nav-btn">Inventario</button></li>
+                <li><button onclick="showSection('ventas')" class="nav-btn">Ventas</button></li>
+                <li><button onclick="showSection('facturas')" class="nav-btn">Facturas</button></li>
+                <li><button onclick="showSection('usuarios')" class="nav-btn">Usuarios</button></li>
+            </ul>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <div class="header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="header-info">
+                    <div class="datetime" id="datetime"></div>
+                    <button class="logout-btn" onclick="confirmLogout()">Cerrar Sesión</button>
+                </div>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div class="section active" id="dashboard">
+                <h2>Dashboard</h2>
+                <div id="stockAlerts"></div>
+                <div class="grid-3">
+                    <div class="stat-card"><h3>Pendientes de hoy</h3><div class="value">Ninguno</div></div>
+                    <div class="stat-card"><h3>Productos</h3><div class="value" id="totalProductos">0</div></div>
+                    <div class="stat-card"><h3>Clientes</h3><div class="value" id="totalClientes">0</div></div>
+                </div>  
+                <br>
+                <h2>Ofertas de Siempre</h2>
+
+  <div class="productos">
+
+    <div class="tarjeta">
+      <img src="imagen.jpg" alt="Sierra de Cortar Madera" onerror="this.src='https://via.placeholder.com/90x90?text=Sierra'" />
+      <div class="info">
+        <h3>Sierra de Cortar Madera</h3>
+        <p class="precio">Precio: <span>$1,300</span></p>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <img src="imagen3.jpg" alt="Pulidor" onerror="this.src='https://via.placeholder.com/90x90?text=Pulidor'" />
+      <div class="info">
+        <h3>Pulidor Truper</h3>
+        <p class="precio">Precio: <span>$1,600.00</span></p>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <img src="imagen4.jpg" alt="Pulidor" onerror="this.src='https://via.placeholder.com/90x90?text=Pulidor'" />
+      <div class="info">
+        <h3>Taladro Truper</h3>
+        <p class="precio">Precio: <span>$1,600.00</span></p>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <img src="imagen5.jpg" alt="Pulidor" onerror="this.src='https://via.placeholder.com/90x90?text=Pulidor'" />
+      <div class="info">
+        <h3>Martillo Truper</h3>
+        <p class="precio">Precio: <span>$500.00</span></p>
+      </div>
+    </div>
+    <div class="tarjeta">
+      <img src="imagen6.jpg" alt="Pulidor" onerror="this.src='https://via.placeholder.com/90x90?text=Pulidor'" />
+      <div class="info">
+        <h3>Cinta 8m Truper</h3>
+        <p class="precio">Precio: <span>$300.00</span></p>
+      </div>
+    </div>
+
+
+
+
+  </div>
+
+                </div>  
+            <!-- CLIENTES -->
+            <div class="section" id="clientes">
+                <h2>Clientes</h2>
+                <div id="alertaClientes" class="alert"></div>
+                <button class="btn-add" onclick="openModal('clienteModal')">+ Agregar Cliente</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroClientes" placeholder="Buscar por nombre, email o teléfono..." onkeyup="filtrarTabla('clientes')">
+                    <button onclick="limpiarFiltro('clientes')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="clientesTable"><thead><tr><th>Nombre</th><th>Apellido P.</th><th>Apellido M.</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noClientesData" class="no-data"></div>
+            </div>
+
+            <!-- PROVEEDORES -->
+            <div class="section" id="proveedores">
+                <h2>Proveedores</h2>
+                <div id="alertaProveedores" class="alert"></div>
+                <button class="btn-add" onclick="openModal('proveedorModal')">+ Agregar Proveedor</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroProveedores" placeholder="Buscar por nombre, email o RFC..." onkeyup="filtrarTabla('proveedores')">
+                    <button onclick="limpiarFiltro('proveedores')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="proveedoresTable"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th>RFC</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noProveedoresData" class="no-data"></div>
+            </div>
+
+            <!-- PERSONAL -->
+            <div class="section" id="personal">
+                <h2>Personal</h2>
+                <div id="alertaPersonal" class="alert"></div>
+                <button class="btn-add" onclick="openModal('personalModal')">+ Agregar Personal</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroPersonal" placeholder="Buscar por nombre, RFC o CURP..." onkeyup="filtrarTabla('personal')">
+                    <button onclick="limpiarFiltro('personal')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="personalTable"><thead><tr><th>Nombre</th><th>CURP</th><th>RFC</th><th>NSS</th><th>Salario</th><th>Dirección</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noPersonalData" class="no-data"></div>
+            </div>
+
+            <!-- CATEGORÍAS -->
+            <div class="section" id="categorias">
+                <h2>Categorías</h2>
+                <div id="alertaCategorias" class="alert"></div>
+                <button class="btn-add" onclick="openModal('categoriaModal')">+ Agregar Categoría</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroCategorias" placeholder="Buscar por nombre o descripción..." onkeyup="filtrarTabla('categorias')">
+                    <button onclick="limpiarFiltro('categorias')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="categoriasTable"><thead><tr><th>Nombre</th><th>Descripción</th><th>Fecha Creación</th><th>Fecha Edición</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noCategoriesData" class="no-data"></div>
+            </div>
+
+            <!-- PRODUCTOS -->
+            <div class="section" id="productos">
+                <h2>Productos</h2>
+                <div id="alertaProductos" class="alert"></div>
+                <button class="btn-add" onclick="openModal('productoModal')">+ Agregar Producto</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroProductos" placeholder="Buscar por código, nombre o categoría..." onkeyup="filtrarTabla('productos')">
+                    <button onclick="limpiarFiltro('productos')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="productosTable"><thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Precio Compra</th><th>Precio Venta</th><th>Caducidad</th><th>Stock</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noProductosData" class="no-data"></div>
+            </div>
+
+            <!-- INVENTARIO -->
+            <div class="section" id="inventario">
+                <h2>Inventario</h2>
+                <div id="alertaInventario" class="alert"></div>
+                <button class="btn-add" onclick="openModal('movimientoModal')">+ Nuevo Movimiento</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroInventario" placeholder="Buscar por producto o tipo de movimiento..." onkeyup="filtrarTabla('inventario')">
+                    <button onclick="limpiarFiltro('inventario')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="inventarioTable"><thead><tr><th>Producto</th><th>Tipo Movimiento</th><th>Cantidad</th><th>Stock Actual</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noInventarioData" class="no-data"></div>
+            </div>
+
+            <!-- VENTAS -->
+            <div class="section" id="ventas">
+                <h2>Ventas</h2>
+                <div id="alertaVentas" class="alert"></div>
+                <div class="carrito-container">
+                    <div class="carrito-section">
+                        <h3>Agregar Productos</h3>
+                        <div class="search-filter">
+                            <input type="text" id="buscarProducto" placeholder="Buscar por nombre o código..." onkeyup="buscarProducto()">
+                        </div>
+                        <div id="productosDisponibles"></div>
+                    </div>
+                    <div class="carrito-section">
+                        <h3>Carrito de Compras</h3>
+                        <div id="carritoProductos"></div>
+                        <div class="resumen-venta">
+                            <div class="resumen-item"><span>Subtotal :</span><span id="subtotal">$0.00</span></div>
+                            <div class="resumen-item"><span>Descuento:</span><span id="descuentoMonto">$0.00</span></div>
+                            <div class="resumen-item"><span>Subtotal c/desc:</span><span id="subtotalDesc">$0.00</span></div>
+                            <div class="resumen-item"><span>IVA (16%):</span><span id="iva">$0.00</span></div>
+                            <div class="resumen-item total"><span>TOTAL :</span><span id="total">$0.00</span></div>
+                        </div>
+                        <button class="btn-add" onclick="abrirOpcionesVenta()" style="width: 100%; margin-top: 15px;">Procesar Venta</button>
+                        <button class="btn-cancel" onclick="limpiarCarrito()" style="width: 100%; margin-top: 10px;">Limpiar Carrito</button>
+                    </div>
+                </div>
+                <div id="comprobanteVenta"></div>
+            </div>
+
+            <!-- FACTURAS -->
+            <div class="section" id="facturas">
+                <h2>Facturas</h2>
+                <div id="alertaFacturas" class="alert"></div>
+                <button class="btn-add" onclick="openModal('facturaModal')">+ Emitir Factura</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroFacturas" placeholder="Buscar por folio, cliente o RFC..." onkeyup="filtrarTabla('facturas')">
+                    <button onclick="limpiarFiltro('facturas')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="facturasTable"><thead><tr><th>Folio</th><th>Cliente</th><th>RFC</th><th>Fecha</th><th>Total</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noFacturasData" class="no-data"></div>
+            </div>
+
+            <!-- USUARIOS -->
+            <div class="section" id="usuarios">
+                <h2>Usuarios</h2>
+                <div id="alertaUsuarios" class="alert"></div>
+                <button class="btn-add" onclick="openModal('usuarioModal')">+ Agregar Usuario</button>
+                <div class="search-filter">
+                    <input type="text" id="filtroUsuarios" placeholder="Buscar por nombre o email..." onkeyup="filtrarTabla('usuarios')">
+                    <button onclick="limpiarFiltro('usuarios')">Limpiar</button>
+                </div>
+                <div class="table-container"><table id="usuariosTable"><thead><tr><th>Nombre</th><th>Email</th><th>Permisos</th><th>Estado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+                <div id="noUsuariosData" class="no-data"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+    <!-- Cliente Modal -->
+    <div class="modal" id="clienteModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Cliente</h2>
+            <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="clienteNombre" placeholder="Nombre del cliente"></div>
+            <div class="grid-2">
+                <div class="form-group"><label>Apellido Paterno <span class="required">*</span></label><input type="text" id="clienteApellidoP" placeholder="Apellido paterno"></div>
+                <div class="form-group"><label>Apellido Materno <span class="required">*</span></label><input type="text" id="clienteApellidoM" placeholder="Apellido materno"></div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="clienteTelefono" placeholder="Teléfono"></div>
+                <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" id="clienteEmail" placeholder="Email"></div>
+            </div>
+            <div class="form-group"><label>Dirección <span class="required">*</span></label><input type="text" id="clienteDireccion" placeholder="Dirección completa"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('clienteModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarCliente()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proveedor Modal -->
+    <div class="modal" id="proveedorModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Proveedor</h2>
+            <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="proveedorNombre" placeholder="Nombre del proveedor"></div>
+            <div class="grid-2">
+                <div class="form-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="proveedorTelefono" placeholder="Teléfono"></div>
+                <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" id="proveedorEmail" placeholder="Email"></div>
+            </div>
+            <div class="form-group"><label>Dirección <span class="required">*</span></label><input type="text" id="proveedorDireccion" placeholder="Dirección"></div>
+            <div class="form-group"><label>RFC <span class="required">*</span></label><input type="text" id="proveedorRFC" placeholder="RFC"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('proveedorModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarProveedor()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personal Modal -->
+    <div class="modal" id="personalModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Personal</h2>
+            <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="personalNombre" placeholder="Nombre completo"></div>
+            <div class="grid-2">
+                <div class="form-group"><label>CURP <span class="required">*</span></label><input type="text" id="personalCURP" placeholder="CURP"></div>
+                <div class="form-group"><label>RFC <span class="required">*</span></label><input type="text" id="personalRFC" placeholder="RFC"></div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>NSS <span class="required">*</span></label><input type="text" id="personalNSS" placeholder="NSS"></div>
+                <div class="form-group"><label>Salario <span class="required">*</span></label><input type="number" id="personalSalario" placeholder="Salario"></div>
+            </div>
+            <div class="form-group"><label>Dirección <span class="required">*</span></label><input type="text" id="personalDireccion" placeholder="Dirección"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('personalModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarPersonal()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categoría Modal -->
+    <div class="modal" id="categoriaModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Categoría</h2>
+            <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="categoriaNombre" placeholder="Nombre de categoría"></div>
+            <div class="form-group"><label>Descripción <span class="required">*</span></label><textarea id="categoriaDescripcion" placeholder="Descripción"></textarea></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('categoriaModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarCategoria()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Producto Modal -->
+    <div class="modal" id="productoModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Producto</h2>
+            <div class="grid-2">
+                <div class="form-group"><label>Código <span class="required">*</span></label><input type="text" id="productoCodigo" placeholder="Código del producto"></div>
+                <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="productoNombre" placeholder="Nombre del producto"></div>
+            </div>
+            <div class="form-group"><label>Categoría <span class="required">*</span></label><select id="productoCategoria"><option>Seleccionar categoría</option></select></div>
+            <div class="grid-2">
+                <div class="form-group"><label>Precio Compra <span class="required">*</span></label><input type="number" id="productoPrecioCompra" placeholder="Precio de compra" step="0.01"></div>
+                <div class="form-group"><label>Precio Venta <span class="required">*</span></label><input type="number" id="productoPrecioVenta" placeholder="Precio de venta" step="0.01"></div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>Fecha Caducidad <span class="required">*</span></label><input type="date" id="productoFechaCaducidad"></div>
+                <div class="form-group"><label>Stock Inicial <span class="required">*</span></label><input type="number" id="productoStock" placeholder="Stock" min="0"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('productoModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarProducto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movimiento Modal -->
+    <div class="modal" id="movimientoModal">
+        <div class="modal-content">
+            <h2>Nuevo Movimiento de Inventario</h2>
+            <div class="form-group"><label>Producto <span class="required">*</span></label><select id="movimientoProducto"><option>Seleccionar producto</option></select></div>
+            <div class="form-group"><label>Tipo Movimiento <span class="required">*</span></label><select id="movimientoTipo"><option>Entrada</option><option>Salida</option><option>Ajuste</option></select></div>
+            <div class="form-group"><label>Cantidad <span class="required">*</span></label><input type="number" id="movimientoCantidad" placeholder="Cantidad" min="1"></div>
+            <div class="form-group"><label>Observaciones</label><textarea id="movimientoObservaciones" placeholder="Observaciones"></textarea></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('movimientoModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarMovimiento()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Opciones Venta Modal -->
+    <div class="modal" id="opcionesVentaModal">
+        <div class="modal-content">
+            <h2>Opciones de Venta</h2>
+            <div class="form-group"><label>Tipo Descuento</label>
+                <div style="display: flex; gap: 20px;">
+                    <label><input type="radio" name="tipoDescuento" value="porcentaje" checked> Porcentaje (%)</label>
+                    <label><input type="radio" name="tipoDescuento" value="monto"> Monto Fijo ($)</label>
+                </div>
+            </div>
+            <div class="form-group"><label>Descuento</label><input type="number" id="descuentoVenta" placeholder="0" min="0" step="0.01"></div>
+            <div class="form-group"><label>Método de Pago <span class="required">*</span></label><select id="metodoPago"><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option><option>Crédito</option></select></div>
+            <div class="form-group"><label>Cliente (Opcional)</label><input type="text" id="clienteVenta" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label>RFC Cliente</label><input type="text" id="rfcCliente" placeholder="RFC"></div>
+            <div class="form-group"><label>Notas/Comentarios</label><textarea id="notasVenta" placeholder="Notas de la venta"></textarea></div>
+            <div id="cambioDiv" style="display: none;">
+                <div class="form-group"><label>Monto Pagado <span class="required">*</span></label><input type="number" id="montoPagado" placeholder="Monto pagado" step="0.01" min="0"></div>
+                <div class="form-group"><label>Cambio </label><input type="number" id="cambio" placeholder="Cambio a devolver" readonly></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('opcionesVentaModal')">Cancelar</button>
+                <button class="btn-save" onclick="procesarVenta()">Procesar Venta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Factura Modal -->
+    <div class="modal" id="facturaModal">
+        <div class="modal-content">
+            <h2>Emitir Factura</h2>
+            <div class="form-group"><label>Folio <span class="required">*</span></label><input type="text" id="facturaFolio" placeholder="F-001"></div>
+            <div class="form-group"><label>Cliente <span class="required">*</span></label><input type="text" id="facturaCliente" placeholder="Nombre del cliente"></div>
+            <div class="form-group"><label>RFC Cliente <span class="required">*</span></label><input type="text" id="facturaRFC" placeholder="RFC"></div>
+            <div class="form-group"><label>Dirección <span class="required">*</span></label><input type="text" id="facturaDireccion" placeholder="Dirección"></div>
+            <div class="form-group"><label>Teléfono <span class="required">*</span></label><input type="tel" id="facturaTelefono" placeholder="Teléfono"></div>
+            <div class="form-group"><label>Total <span class="required">*</span></label><input type="number" id="facturaTotal" placeholder="Total" step="0.01"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('facturaModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarFactura()">Emitir Factura</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usuario Modal -->
+    <div class="modal" id="usuarioModal">
+        <div class="modal-content">
+            <h2>Agregar/Editar Usuario</h2>
+            <div class="form-group"><label>Nombre <span class="required">*</span></label><input type="text" id="usuarioNombre" placeholder="Nombre del usuario"></div>
+            <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" id="usuarioEmail" placeholder="Email"></div>
+            <div class="form-group"><label>Contraseña <span class="required">*</span></label><input type="password" id="usuarioPassword" placeholder="Contraseña"></div>
+            <div class="form-group"><label>Permisos</label>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label><input type="checkbox" value="clientes"> Clientes</label>
+                    <label><input type="checkbox" value="proveedores"> Proveedores</label>
+                    <label><input type="checkbox" value="personal"> Personal</label>
+                    <label><input type="checkbox" value="productos"> Productos</label>
+                    <label><input type="checkbox" value="ventas"> Ventas</label>
+                    <label><input type="checkbox" value="facturas"> Facturas</label>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('usuarioModal')">Cancelar</button>
+                <button class="btn-save" onclick="guardarUsuario()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app-mejorado.js"></script>
+</body>
+</html>
